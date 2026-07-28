@@ -1,5 +1,5 @@
-# Builds queen contiguity neighbour lists per municipality from the census sector shapefile.
-# Output: data/contiguity_by_municipality.pkl
+# Builds queen contiguity neighbour lists per state from the census sector shapefile.
+# Output: data/contiguity_by_uf.pkl
 # Requires: geopandas, pandas
 
 import pickle
@@ -9,10 +9,10 @@ import geopandas as gpd
 
 BASE = Path(__file__).resolve().parent.parent
 SHAPEFILE = BASE / "data" / "shapefiles" / "brazil_census_sectors_2022.shp"
-OUT_PKL = BASE / "data" / "contiguity_by_municipality.pkl"
+OUT_PKL = BASE / "data" / "contiguity_by_uf.pkl"
 
 SECTOR_KEY = "CD_SETOR"
-MUNICIPALITY_KEY = "CD_MUN"
+STATE_KEY = "CD_UF"
 
 
 def neighbours(sectors):
@@ -20,8 +20,8 @@ def neighbours(sectors):
     code_of = sectors[SECTOR_KEY].to_dict()
     adjacency = {code: set() for code in sectors[SECTOR_KEY]}
 
-    # Two sectors are queen neighbours when their polygons share at least one boundary point,
-    # which is what "touches" returns for polygons that meet along an edge or at a vertex.
+    # Queen contiguity: the polygons share at least one boundary point and no interior,
+    # which is what "touches" returns for sectors meeting along an edge or at a vertex.
     pairs = gpd.sjoin(sectors[["geometry"]], sectors[["geometry"]], predicate="touches", how="inner")
     for left, right in zip(pairs.index, pairs["index_right"]):
         if left == right:
@@ -36,13 +36,13 @@ def main():
         return
 
     sectors = gpd.read_file(SHAPEFILE)
-    sectors = sectors[[SECTOR_KEY, MUNICIPALITY_KEY, "geometry"]].copy()
+    sectors = sectors[[SECTOR_KEY, STATE_KEY, "geometry"]].copy()
     sectors[SECTOR_KEY] = sectors[SECTOR_KEY].astype(str)
-    sectors[MUNICIPALITY_KEY] = sectors[MUNICIPALITY_KEY].astype(str)
+    sectors[STATE_KEY] = sectors[STATE_KEY].astype(str)
 
     contiguity = {}
-    for municipality, group in sectors.groupby(MUNICIPALITY_KEY, sort=True):
-        contiguity[municipality] = neighbours(group)
+    for state, group in sectors.groupby(STATE_KEY, sort=True):
+        contiguity[state] = neighbours(group)
 
     with OUT_PKL.open("wb") as f:
         pickle.dump(contiguity, f, protocol=pickle.HIGHEST_PROTOCOL)

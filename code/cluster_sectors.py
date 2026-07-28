@@ -1,8 +1,7 @@
-# Aggregates census sectors into contiguous planning units that reach the ESF population reference.
+# Groups census sectors into contiguous clusters that stay within the ESF population reference.
 # Output: data/sector_cluster.csv
 # Requires: pandas
 
-import heapq
 import pickle
 from pathlib import Path
 
@@ -10,98 +9,82 @@ import pandas as pd
 
 BASE = Path(__file__).resolve().parent.parent
 HVI_CSV = BASE / "data" / "hvi_by_sector.csv"
-CONTIGUITY_PKL = BASE / "data" / "contiguity_by_municipality.pkl"
+CONTIGUITY_PKL = BASE / "data" / "contiguity_by_uf.pkl"
 OUT_CSV = BASE / "data" / "sector_cluster.csv"
 
 SECTOR_KEY = "CD_SETOR"
-ATTRIBUTES = [
-    "hvi",
-    "urban_infrastructure",
-    "human_capital",
-    "income_employment",
-    "demographic_vulnerability",
-]
-THRESHOLD = 3000
+MAX_POP = 3000
+SMALL_CLUSTER = 0.5 * MAX_POP
 
 
-def ward_cost(a, b):
-    weight = a["size"] * b["size"] / (a["size"] + b["size"])
-    return weight * sum((x - y) ** 2 for x, y in zip(a["mean"], b["mean"]))
+class UnionFind:
+    def __init__(self, populations):
+        n = len(populations)
+        self.parent = list(range(n))
+        self.rank = [0] * n
+        self.population = list(populations)
+
+    def find(self, x):
+        while self.parent[x] != x:
+            self.parent[x] = self.parent[self.parent[x]]
+            x = self.parent[x]
+        return x
+
+    def union(self, x, y, max_pop):
+        a, b = self.find(x), self.find(y)
+        if a == b:
+            return False
+        total = self.population[a] + self.population[b]
+        if total > max_pop:
+            return False
+        if self.rank[a] < self.rank[b]:
+            a, b = b, a
+        self.parent[b] = a
+        self.population[a] = total
+        if self.rank[a] == self.rank[b]:
+            self.rank[a] += 1
+        return True
 
 
-def union(a, b):
-    size = a["size"] + b["size"]
-    return {
-        "members": a["members"] + b["members"],
-        "population": a["population"] + b["population"],
-        "size": size,
-        "mean": tuple((a["size"] * x + b["size"] * y) / size for x, y in zip(a["mean"], b["mean"])),
-        "neighbours": a["neighbours"] | b["neighbours"],
-    }
-
-
-def regionalize(sectors, adjacency, threshold):
+def group_state(sectors, adjacency):
     codes = list(sectors.index)
     position = {code: i for i, code in enumerate(codes)}
+    hvi = sectors["hvi"].tolist()
+    populations = sectors["population"].tolist()
 
-    regions = {}
+    groups = UnionFind(populations)
+
+    # A sector that already holds more people than one team can take stays on its own,
+    # since any merge would breach the reference.
+    isolated = {i for i, people in enumerate(populations) if people > MAX_POP}
+
+    edges = []
     for code, i in position.items():
-        row = sectors.loc[code]
-        regions[i] = {
-            "members": [code],
-            "population": float(row["population"]),
-            "size": 1,
-            "mean": tuple(float(row[a]) for a in ATTRIBUTES),
-            "neighbours": set(),
-        }
-
-    for code, i in position.items():
-        for other in adjacency.get(code, ()):
-            j = position.get(other)
-            if j is not None and j != i:
-                regions[i]["neighbours"].add(j)
-                regions[j]["neighbours"].add(i)
-
-    alive = set(regions)
-    short = sum(1 for i in alive if regions[i]["population"] < threshold)
-
-    heap = []
-    for i in alive:
-        for j in regions[i]["neighbours"]:
-            if i < j:
-                heapq.heappush(heap, (ward_cost(regions[i], regions[j]), i, j))
-
-    following = len(regions)
-    while heap and short:
-        _, i, j = heapq.heappop(heap)
-        if i not in alive or j not in alive:
+        if i in isolated:
             continue
-        # A pair is only eligible while at least one of its regions is still below the threshold,
-        # which keeps regions that already qualify from swallowing their neighbours.
-        if regions[i]["population"] >= threshold and regions[j]["population"] >= threshold:
-            continue
-
-        merged = union(regions[i], regions[j])
-        merged["neighbours"] -= {i, j}
-
-        short -= (regions[i]["population"] < threshold) + (regions[j]["population"] < threshold)
-        if merged["population"] < threshold:
-            short += 1
-
-        k = following
-        following += 1
-        regions[k] = merged
-        alive.difference_update({i, j})
-        alive.add(k)
-
-        for n in merged["neighbours"]:
-            if n not in alive:
+        for neighbour in adjacency.get(code, ()):
+            j = position.get(neighbour)
+            if j is None or j <= i or j in isolated:
                 continue
-            regions[n]["neighbours"].difference_update({i, j})
-            regions[n]["neighbours"].add(k)
-            heapq.heappush(heap, (ward_cost(merged, regions[n]), min(k, n), max(k, n)))
+            edges.append((abs(hvi[i] - hvi[j]), i, j))
 
-    return [regions[i]["members"] for i in sorted(alive)]
+    # Closest pair in vulnerability first, so the most similar sectors merge while there is room.
+    edges.sort()
+    for _, i, j in edges:
+        groups.union(i, j, MAX_POP)
+
+    # Clusters that ended up well under the reference get one more attempt with a neighbour.
+    for code, i in position.items():
+        if i in isolated or groups.population[groups.find(i)] >= SMALL_CLUSTER:
+            continue
+        for neighbour in adjacency.get(code, ()):
+            j = position.get(neighbour)
+            if j is None or j in isolated:
+                continue
+            if groups.union(i, j, MAX_POP):
+                break
+
+    return {code: groups.find(i) for code, i in position.items()}
 
 
 def main():
@@ -113,15 +96,20 @@ def main():
         contiguity = pickle.load(f)
 
     rows = []
-    for municipality, adjacency in contiguity.items():
+    for state in sorted(contiguity):
+        adjacency = contiguity[state]
         known = [code for code in adjacency if code in hvi.index]
-        sectors = hvi.loc[known].dropna(subset=ATTRIBUTES + ["population"])
+        sectors = hvi.loc[known].dropna(subset=["hvi", "population"])
         if sectors.empty:
             continue
-        for cluster, members in enumerate(regionalize(sectors, adjacency, THRESHOLD), start=1):
-            rows.extend((code, municipality, cluster) for code in members)
 
-    frame = pd.DataFrame(rows, columns=[SECTOR_KEY, "CD_MUN", "cluster"])
+        numbering = {}
+        for code, root in group_state(sectors, adjacency).items():
+            if root not in numbering:
+                numbering[root] = len(numbering) + 1
+            rows.append((code, state, numbering[root]))
+
+    frame = pd.DataFrame(rows, columns=[SECTOR_KEY, "CD_UF", "cluster"])
     frame.to_csv(OUT_CSV, index=False, encoding="utf-8-sig")
 
 
