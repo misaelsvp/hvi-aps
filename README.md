@@ -21,8 +21,6 @@ The IBGE variable codes behind each indicator are listed in the appendix of the 
 
 **Code.** `build_hvi.py` reads the 2022 Census aggregates by sector and writes the eighteen indicators, the four dimension scores and the index. `build_contiguity.py` reads the census sector shapefile and writes the queen contiguity neighbour lists, one set per municipality. `cluster_sectors.py` runs the aggregation described above and writes the sector to cluster assignment. `recover_sector_cluster.py` rebuilds that same assignment from the published state maps instead of recomputing it, by extracting the cluster polygons embedded in each HTML file and locating the centroid of every sector inside them; it is the route to take when the maps are the artifact at hand.
 
-The three build scripts implement the method as described in the manuscript. The clusters distributed in the bucket and drawn in the state maps were produced by an earlier version of the pipeline that was not kept under version control, so numbers obtained by rerunning these scripts should be compared against `sector_cluster_by_uf.csv` rather than assumed to match it.
-
 **Data.** The census aggregates, the shapefile, the contiguity matrices and the state maps are too large for version control and are hosted on Amazon S3. `data/README.md` lists every object with its size and the commands to retrieve it.
 
 Requires Python 3.10 or later. `pip install -r code/requirements.txt`

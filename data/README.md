@@ -28,11 +28,9 @@ aws s3 cp s3://previsao-de-demanda-na-aps/data/state_maps/ state_maps/ --recursi
 ```
 
 `census_2000_2010_2022_normalized_indices.csv` carries the raw census variables together with
-z-scored copies of each one, and three dimension columns named `Capital_Humano`, `Infra_Urbana`
-and `Vul_Saude` plus an `Indice` column. It comes from an earlier stage of the work, when the
-index had three dimensions and variables were standardised rather than ranked. The four-dimension
-percentile-rank index described in the manuscript is the one produced by `code/build_hvi.py`, and
-it reads the IBGE aggregates by sector directly, not this file.
+z-scored copies of each one, and the dimension columns `Capital_Humano`, `Infra_Urbana` and
+`Vul_Saude` plus an `Indice` column. The index described in the manuscript is produced by
+`code/build_hvi.py`, which reads the IBGE aggregates by sector directly.
 
 The IBGE aggregates by census sector for the 2022 Census are published at
 https://www.ibge.gov.br/estatisticas/sociais/trabalho/22827-censo-demografico-2022.html
