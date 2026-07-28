@@ -1,0 +1,28 @@
+# Health Vulnerability Index and territorial clustering for Primary Health Care
+
+Supplementary material for the manuscript entitled "Health Vulnerability Index and territorial clustering for Primary Health Care planning: a census-data and spatial analysis approach in Brazil".
+
+Primary Health Care in Brazil is organised around the Family Health Strategy, whose teams are assigned to defined geographic catchment areas. Planning those areas depends on knowing where health vulnerability concentrates, and the census sector is the finest unit at which that can be measured for the whole country. The 2022 Demographic Census has 458,772 sectors, which is a useful resolution for measurement and an unusable one for management.
+
+The Health Vulnerability Index is computed for every sector from 2022 Census variables, over four dimensions: urban infrastructure, human capital, income and employment, and demographic vulnerability. Eighteen indicators feed those dimensions. Each indicator is converted to its national percentile rank, so that quantities with different units and different dispersions can be combined without choosing weights for them. A dimension score is the mean of the ranks of its indicators, and the index is the mean of the four dimension scores. Values run from 0 to 1 and higher means more vulnerable.
+
+Sectors are then aggregated into planning units. A unit has to be spatially connected under queen contiguity, and it has to reach the population reference used for one Family Health team, around 3,000 residents. Every sector starts as its own region. At each step the pair of adjacent regions whose union adds the least within-region variance is merged, and a pair is eligible only while at least one of its two regions is still below the population threshold, which stops regions that already qualify from absorbing their neighbours. The process runs municipality by municipality and ends when no region is left below the threshold. Municipalities whose entire population is below the threshold end as a single region.
+
+Interactive maps of the resulting clusters for every state are at http://ivs-cluster-na-aps.s3-website-sa-east-1.amazonaws.com/
+
+| Dimension | Indicators |
+|---|---|
+| Urban infrastructure | inadequate water supply, inadequate sewage, no garbage collection, households without bathroom, overcrowded households |
+| Human capital | illiteracy at 15 and over, illiteracy from 15 to 29, female-headed households without spouse, illiterate household heads, illiterate female household heads |
+| Income and employment | low household-head income, adolescent household heads, substandard housing |
+| Demographic vulnerability | population 65 and over, population 0 to 4, households headed by older adults, dependency ratio, premature mortality from 30 to 69 |
+
+The IBGE variable codes behind each indicator are listed in the appendix of the manuscript and in `code/build_hvi.py`.
+
+**Code.** `build_hvi.py` reads the 2022 Census aggregates by sector and writes the eighteen indicators, the four dimension scores and the index. `build_contiguity.py` reads the census sector shapefile and writes the queen contiguity neighbour lists, one set per municipality. `cluster_sectors.py` runs the aggregation described above and writes the sector to cluster assignment. `recover_sector_cluster.py` rebuilds that same assignment from the published state maps instead of recomputing it, by extracting the cluster polygons embedded in each HTML file and locating the centroid of every sector inside them; it is the route to take when the maps are the artifact at hand.
+
+The three build scripts implement the method as described in the manuscript. The clusters distributed in the bucket and drawn in the state maps were produced by an earlier version of the pipeline that was not kept under version control, so numbers obtained by rerunning these scripts should be compared against `sector_cluster_by_uf.csv` rather than assumed to match it.
+
+**Data.** The census aggregates, the shapefile, the contiguity matrices and the state maps are too large for version control and are hosted on Amazon S3. `data/README.md` lists every object with its size and the commands to retrieve it.
+
+Requires Python 3.10 or later. `pip install -r code/requirements.txt`
