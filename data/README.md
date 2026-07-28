@@ -14,17 +14,17 @@ directory, in the paths shown below.
 | `data/state_maps/state_map_*.html` (27 files) | 8 MB to 167 MB each | `data/state_maps/` |
 | `data/sector_cluster/sector_cluster_by_uf.csv` | 12.6 MB | `data/` |
 
-To retrieve a single object:
+The objects are readable without credentials, so a single file can be fetched over plain HTTPS:
 
 ```
-aws s3 cp s3://previsao-de-demanda-na-aps/data/sector_cluster/sector_cluster_by_uf.csv . --region sa-east-1
+curl -O https://previsao-de-demanda-na-aps.s3.sa-east-1.amazonaws.com/data/sector_cluster/sector_cluster_by_uf.csv
 ```
 
-To retrieve the shapefile and the state maps:
+For the shapefile and the state maps the CLI is more convenient:
 
 ```
-aws s3 cp s3://previsao-de-demanda-na-aps/data/shapefiles/ shapefiles/ --recursive --region sa-east-1
-aws s3 cp s3://previsao-de-demanda-na-aps/data/state_maps/ state_maps/ --recursive --region sa-east-1
+aws s3 cp s3://previsao-de-demanda-na-aps/data/shapefiles/ shapefiles/ --recursive --region sa-east-1 --no-sign-request
+aws s3 cp s3://previsao-de-demanda-na-aps/data/state_maps/ state_maps/ --recursive --region sa-east-1 --no-sign-request
 ```
 
 `census_2000_2010_2022_normalized_indices.csv` carries the raw census variables together with
