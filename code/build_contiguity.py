@@ -20,9 +20,10 @@ def neighbours(sectors):
     code_of = sectors[SECTOR_KEY].to_dict()
     adjacency = {code: set() for code in sectors[SECTOR_KEY]}
 
-    # Queen contiguity: the polygons share at least one boundary point and no interior,
-    # which is what "touches" returns for sectors meeting along an edge or at a vertex.
-    pairs = gpd.sjoin(sectors[["geometry"]], sectors[["geometry"]], predicate="touches", how="inner")
+    # Queen contiguity: the polygons share at least one boundary point, an edge or a vertex.
+    # "intersects" rather than "touches" because the published meshes carry slivers that leave
+    # adjacent tracts marginally overlapping, and "touches" drops those pairs.
+    pairs = gpd.sjoin(sectors[["geometry"]], sectors[["geometry"]], predicate="intersects", how="inner")
     for left, right in zip(pairs.index, pairs["index_right"]):
         if left == right:
             continue
