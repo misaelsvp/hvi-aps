@@ -57,6 +57,7 @@ const shade = v => v == null ? '#cccccc' : COLOURS[breaks.filter(b => v >= b).le
 const legend = L.control({ position: 'bottomright' });
 legend.onAdd = () => {
   const div = L.DomUtil.create('div', 'legend');
+  if (!breaks.length || breaks.some(b => b == null)) { div.style.display = 'none'; return div; }
   div.innerHTML = '<strong>Index, state quintiles</strong><br>';
   COLOURS.forEach((colour, i) => {
     const from = i === 0 ? null : breaks[i - 1];
