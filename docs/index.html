@@ -77,7 +77,7 @@ function describe(p) {
 }
 
 async function show(entry) {
-  status.textContent = 'loading ' + entry.uf + ', ' + entry.mb + ' MB';
+  status.textContent = 'loading ' + entry.uf + ', ' + entry.mb + ' MB, large states take a few seconds';
   if (layer) { map.removeLayer(layer); layer = null; }
   try {
     const data = await (await fetch(entry.arquivo)).json();
@@ -98,7 +98,7 @@ fetch('data/index.json').then(r => r.json()).then(list => {
   list.sort((a, b) => a.uf.localeCompare(b.uf));
   list.forEach((e, i) => picker.add(new Option(e.uf, i)));
   picker.onchange = () => show(list[picker.value]);
-  const start = Math.max(0, list.findIndex(e => e.uf === 'MG'));
+  const start = Math.max(0, list.findIndex(e => e.uf === 'DF'));
   picker.value = start;
   show(list[start]);
 }).catch(err => { status.textContent = 'could not load the state index: ' + err.message; });
