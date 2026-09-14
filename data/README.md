@@ -1,36 +1,31 @@
 # Data
 
-The census aggregates, the sector shapefile, the contiguity matrices and the state maps are too
-large for version control. They are hosted on Amazon S3, in the bucket
-`previsao-de-demanda-na-aps`, region `sa-east-1`. The scripts in `code/` expect them under this
-directory, in the paths shown below.
+The Amazon S3 bucket that previously hosted the census aggregates, the sector shapefile, the
+contiguity matrices and the state maps is no longer reachable. Anonymous requests return
+`403 AllAccessDisabled` and authenticated requests return `InvalidAccessKeyId`, which indicates the
+account itself is gone rather than public access having been switched off. The two derived tables
+that the scripts actually consume are therefore kept in this repository, gzipped.
 
-| Object | Size | Local path expected by the scripts |
+| File | Rows | Content |
 |---|---|---|
-| `data/shapefiles/brazil_census_sectors_2022.shp` (with `.dbf`, `.shx`, `.prj`, `.cpg`) | 1.25 GB + 988 MB | `data/shapefiles/` |
-| `data/census_2000_2010_2022_normalized_indices.csv` | 1.24 GB | `data/` |
-| `data/adjacency_matrices/all_matrices.pkl` | 1.44 GB | `data/adjacency_matrices/` |
-| `data/adjacency_matrices/processing_buffer.pkl` | 176 MB | `data/adjacency_matrices/` |
-| `data/state_maps/state_map_*.html` (27 files) | 8 MB to 167 MB each | `data/state_maps/` |
-| `data/sector_cluster/sector_cluster_by_uf.csv` | 12.6 MB | `data/` |
+| `hvi_by_sector.csv.gz` | 458,772 | one row per 2022 census tract: dimension scores, index, resident population |
+| `sector_cluster.csv.gz` | 451,383 | tract to cluster assignment, with state and municipality codes |
 
-The objects are readable without credentials, so a single file can be fetched over plain HTTPS:
+Decompress before running the scripts:
 
 ```
-curl -O https://previsao-de-demanda-na-aps.s3.sa-east-1.amazonaws.com/data/sector_cluster/sector_cluster_by_uf.csv
+gzip -dk data/hvi_by_sector.csv.gz data/sector_cluster.csv.gz
 ```
 
-For the shapefile and the state maps the CLI is more convenient:
+`hvi_by_sector.csv.gz` carries the dimension columns of an earlier specification of the index,
+which had three dimensions standardised to zero mean and unit variance. The four-dimension
+percentile-rank index described in the manuscript is the one produced by `code/build_hvi.py`, which
+reads the IBGE aggregates by census tract directly. Running that script replaces this file.
 
-```
-aws s3 cp s3://previsao-de-demanda-na-aps/data/shapefiles/ shapefiles/ --recursive --region sa-east-1 --no-sign-request
-aws s3 cp s3://previsao-de-demanda-na-aps/data/state_maps/ state_maps/ --recursive --region sa-east-1 --no-sign-request
-```
-
-`census_2000_2010_2022_normalized_indices.csv` carries the raw census variables together with
-z-scored copies of each one, and the dimension columns `Capital_Humano`, `Infra_Urbana` and
-`Vul_Saude` plus an `Indice` column. The index described in the manuscript is produced by
-`code/build_hvi.py`, which reads the IBGE aggregates by sector directly.
-
-The IBGE aggregates by census sector for the 2022 Census are published at
+The IBGE aggregates by census tract for the 2022 Census, and the corresponding tract boundaries,
+are published by the institute at
 https://www.ibge.gov.br/estatisticas/sociais/trabalho/22827-censo-demografico-2022.html
+
+`code/build_contiguity.py` and the Moran's I section of `code/validate.py` need the tract
+boundaries, which are too large for version control and are not redistributed here. Download them
+from IBGE at the address above.
