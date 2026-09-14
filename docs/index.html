@@ -38,31 +38,38 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const map = L.map('map').setView([-15.0, -52.0], 4);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 18
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; OpenStreetMap contributors', maxZoom: 18
 }).addTo(map);
 
 const status = document.getElementById('status');
 const picker = document.getElementById('uf');
 let layer = null;
 
-const BREAKS = [0.2, 0.4, 0.6, 0.8];
-const COLOURS = ['#f7f7c8', '#fed976', '#fd8d3c', '#e31a1c', '#800026'];
-const shade = v => v == null ? '#cccccc' : COLOURS[BREAKS.filter(b => v >= b).length];
+const COLOURS = ['#ffffb2', '#fed976', '#fd8d3c', '#e31a1c', '#800026'];
+let breaks = [];
+const quantiles = values => {
+  const s = values.filter(v => v != null && !isNaN(v)).sort((a, b) => a - b);
+  return [0.2, 0.4, 0.6, 0.8].map(q => s[Math.floor(q * (s.length - 1))]);
+};
+const shade = v => v == null ? '#cccccc' : COLOURS[breaks.filter(b => v >= b).length];
 
 const legend = L.control({ position: 'bottomright' });
 legend.onAdd = () => {
   const div = L.DomUtil.create('div', 'legend');
-  div.innerHTML = '<strong>Index</strong><br>';
-  const edges = [0].concat(BREAKS);
-  edges.forEach((from, i) => {
-    const to = edges[i + 1];
-    div.innerHTML += '<i style="background:' + COLOURS[i] + '"></i>' +
-      from.toFixed(1) + (to ? '&ndash;' + to.toFixed(1) : '+') + '<br>';
+  div.innerHTML = '<strong>Index, state quintiles</strong><br>';
+  COLOURS.forEach((colour, i) => {
+    const from = i === 0 ? null : breaks[i - 1];
+    const to = breaks[i];
+    div.innerHTML += '<i style="background:' + colour + '"></i>' +
+      (from == null ? 'below ' + to.toFixed(3)
+        : to == null ? from.toFixed(3) + ' and above'
+        : from.toFixed(3) + '&ndash;' + to.toFixed(3)) + '<br>';
   });
   return div;
 };
 legend.addTo(map);
+const redrawLegend = () => { legend.remove(); legend.addTo(map); };
 
 function describe(p) {
   const rows = [
@@ -81,11 +88,13 @@ async function show(entry) {
   if (layer) { map.removeLayer(layer); layer = null; }
   try {
     const data = await (await fetch(entry.arquivo)).json();
+    breaks = quantiles(data.features.map(f => f.properties.hvi));
     layer = L.geoJSON(data, {
       style: f => ({ color: '#555', weight: 0.4, fillColor: shade(f.properties.hvi), fillOpacity: 0.75 }),
       onEachFeature: (f, l) => l.bindPopup(describe(f.properties))
     }).addTo(map);
     map.fitBounds(layer.getBounds());
+    redrawLegend();
     status.textContent = entry.clusters.toLocaleString('en-US') + ' clusters, ' +
       entry.setores.toLocaleString('en-US') + ' census tracts, ' +
       entry.populacao.toLocaleString('en-US') + ' residents';
