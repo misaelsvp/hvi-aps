@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HVI clusters by state</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #222; }
+  header { padding: 1rem 1.25rem; border-bottom: 1px solid #ddd; }
+  h1 { font-size: 1.1rem; margin: 0 0 .35rem; font-weight: 600; }
+  p { margin: 0; font-size: .85rem; color: #555; max-width: 62rem; line-height: 1.5; }
+  .bar { padding: .6rem 1.25rem; border-bottom: 1px solid #ddd; display: flex; gap: 1rem;
+         align-items: center; flex-wrap: wrap; font-size: .85rem; }
+  select { padding: .3rem .4rem; font-size: .85rem; }
+  #status { color: #666; }
+  #map { height: calc(100vh - 152px); min-height: 380px; }
+  .legend { background: #fff; padding: .5rem .6rem; line-height: 1.5rem; font-size: .78rem;
+            box-shadow: 0 1px 4px rgba(0,0,0,.3); border-radius: 3px; }
+  .legend i { width: 15px; height: 15px; float: left; margin-right: 6px; opacity: .85; }
+  a { color: #0055aa; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Health Vulnerability Index: territorial clusters</h1>
+  <p>Census tracts of the 2022 Brazilian Census aggregated into contiguous planning units under the
+     Family Health Strategy caseload reference. Supplementary material for the manuscript; the code
+     and the underlying tables are in the
+     <a href="https://github.com/misaelsvp/hvi-aps">repository</a>.</p>
+</header>
+<div class="bar">
+  <label>State <select id="uf"></select></label>
+  <span id="status">loading the state index</span>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map = L.map('map').setView([-15.0, -52.0], 4);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap contributors &copy; CARTO', maxZoom: 18
+}).addTo(map);
+
+const status = document.getElementById('status');
+const picker = document.getElementById('uf');
+let layer = null;
+
+const BREAKS = [0.2, 0.4, 0.6, 0.8];
+const COLOURS = ['#f7f7c8', '#fed976', '#fd8d3c', '#e31a1c', '#800026'];
+const shade = v => v == null ? '#cccccc' : COLOURS[BREAKS.filter(b => v >= b).length];
+
+const legend = L.control({ position: 'bottomright' });
+legend.onAdd = () => {
+  const div = L.DomUtil.create('div', 'legend');
+  div.innerHTML = '<strong>Index</strong><br>';
+  const edges = [0].concat(BREAKS);
+  edges.forEach((from, i) => {
+    const to = edges[i + 1];
+    div.innerHTML += '<i style="background:' + COLOURS[i] + '"></i>' +
+      from.toFixed(1) + (to ? '&ndash;' + to.toFixed(1) : '+') + '<br>';
+  });
+  return div;
+};
+legend.addTo(map);
+
+function describe(p) {
+  const rows = [
+    ['Cluster', p.cluster],
+    ['Municipality', p.municipio || '&mdash;'],
+    ['Census tracts', p.setores],
+    ['Residents', (p.population || 0).toLocaleString('en-US')],
+    ['Mean index', p.hvi == null ? '&mdash;' : p.hvi.toFixed(3)]
+  ];
+  return '<table>' + rows.map(r => '<tr><td style="padding-right:.6rem">' + r[0] +
+    '</td><td><strong>' + r[1] + '</strong></td></tr>').join('') + '</table>';
+}
+
+async function show(entry) {
+  status.textContent = 'loading ' + entry.uf + ', ' + entry.mb + ' MB';
+  if (layer) { map.removeLayer(layer); layer = null; }
+  try {
+    const data = await (await fetch(entry.arquivo)).json();
+    layer = L.geoJSON(data, {
+      style: f => ({ color: '#555', weight: 0.4, fillColor: shade(f.properties.hvi), fillOpacity: 0.75 }),
+      onEachFeature: (f, l) => l.bindPopup(describe(f.properties))
+    }).addTo(map);
+    map.fitBounds(layer.getBounds());
+    status.textContent = entry.clusters.toLocaleString('en-US') + ' clusters, ' +
+      entry.setores.toLocaleString('en-US') + ' census tracts, ' +
+      entry.populacao.toLocaleString('en-US') + ' residents';
+  } catch (err) {
+    status.textContent = 'could not load ' + entry.uf + ': ' + err.message;
+  }
+}
+
+fetch('data/index.json').then(r => r.json()).then(list => {
+  list.sort((a, b) => a.uf.localeCompare(b.uf));
+  list.forEach((e, i) => picker.add(new Option(e.uf, i)));
+  picker.onchange = () => show(list[picker.value]);
+  const start = Math.max(0, list.findIndex(e => e.uf === 'MG'));
+  picker.value = start;
+  show(list[start]);
+}).catch(err => { status.textContent = 'could not load the state index: ' + err.message; });
+</script>
+</body>
+</html>

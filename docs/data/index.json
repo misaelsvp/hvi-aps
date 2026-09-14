@@ -1,0 +1,210 @@
+[
+ {
+  "uf": "AC",
+  "clusters": 438,
+  "setores": 2199,
+  "populacao": 823724,
+  "arquivo": "data/clusters_ac.geojson",
+  "mb": 0.9
+ },
+ {
+  "uf": "AL",
+  "clusters": 1650,
+  "setores": 6349,
+  "populacao": 3122551,
+  "arquivo": "data/clusters_al.geojson",
+  "mb": 1.3
+ },
+ {
+  "uf": "AM",
+  "clusters": 2556,
+  "setores": 10396,
+  "populacao": 3926354,
+  "arquivo": "data/clusters_am.geojson",
+  "mb": 4.5
+ },
+ {
+  "uf": "AP",
+  "clusters": 380,
+  "setores": 1485,
+  "populacao": 730047,
+  "arquivo": "data/clusters_ap.geojson",
+  "mb": 0.4
+ },
+ {
+  "uf": "BA",
+  "clusters": 7154,
+  "setores": 30972,
+  "populacao": 14131076,
+  "arquivo": "data/clusters_ba.geojson",
+  "mb": 7.9
+ },
+ {
+  "uf": "CE",
+  "clusters": 4503,
+  "setores": 20929,
+  "populacao": 8781875,
+  "arquivo": "data/clusters_ce.geojson",
+  "mb": 4.2
+ },
+ {
+  "uf": "DF",
+  "clusters": 1294,
+  "setores": 5394,
+  "populacao": 2800136,
+  "arquivo": "data/clusters_df.geojson",
+  "mb": 0.9
+ },
+ {
+  "uf": "ES",
+  "clusters": 1875,
+  "setores": 8699,
+  "populacao": 3816448,
+  "arquivo": "data/clusters_es.geojson",
+  "mb": 1.9
+ },
+ {
+  "uf": "GO",
+  "clusters": 3351,
+  "setores": 12857,
+  "populacao": 7041999,
+  "arquivo": "data/clusters_go.geojson",
+  "mb": 4.2
+ },
+ {
+  "uf": "MA",
+  "clusters": 4040,
+  "setores": 16241,
+  "populacao": 6765345,
+  "arquivo": "data/clusters_ma.geojson",
+  "mb": 4.1
+ },
+ {
+  "uf": "MG",
+  "clusters": 10177,
+  "setores": 51353,
+  "populacao": 20492590,
+  "arquivo": "data/clusters_mg.geojson",
+  "mb": 13.0
+ },
+ {
+  "uf": "MS",
+  "clusters": 1320,
+  "setores": 6110,
+  "populacao": 2744450,
+  "arquivo": "data/clusters_ms.geojson",
+  "mb": 1.9
+ },
+ {
+  "uf": "MT",
+  "clusters": 2044,
+  "setores": 9340,
+  "populacao": 3649073,
+  "arquivo": "data/clusters_mt.geojson",
+  "mb": 3.8
+ },
+ {
+  "uf": "PB",
+  "clusters": 1978,
+  "setores": 9634,
+  "populacao": 3967098,
+  "arquivo": "data/clusters_pb.geojson",
+  "mb": 1.9
+ },
+ {
+  "uf": "PE",
+  "clusters": 4608,
+  "setores": 19563,
+  "populacao": 9031890,
+  "arquivo": "data/clusters_pe.geojson",
+  "mb": 3.8
+ },
+ {
+  "uf": "PI",
+  "clusters": 1740,
+  "setores": 7338,
+  "populacao": 3267603,
+  "arquivo": "data/clusters_pi.geojson",
+  "mb": 2.1
+ },
+ {
+  "uf": "PR",
+  "clusters": 5554,
+  "setores": 23755,
+  "populacao": 11421063,
+  "arquivo": "data/clusters_pr.geojson",
+  "mb": 6.1
+ },
+ {
+  "uf": "RJ",
+  "clusters": 7829,
+  "setores": 41630,
+  "populacao": 16014328,
+  "arquivo": "data/clusters_rj.geojson",
+  "mb": 6.5
+ },
+ {
+  "uf": "RN",
+  "clusters": 1731,
+  "setores": 6065,
+  "populacao": 3297393,
+  "arquivo": "data/clusters_rn.geojson",
+  "mb": 1.3
+ },
+ {
+  "uf": "RO",
+  "clusters": 798,
+  "setores": 3407,
+  "populacao": 1573958,
+  "arquivo": "data/clusters_ro.geojson",
+  "mb": 1.0
+ },
+ {
+  "uf": "RR",
+  "clusters": 573,
+  "setores": 1729,
+  "populacao": 623288,
+  "arquivo": "data/clusters_rr.geojson",
+  "mb": 0.7
+ },
+ {
+  "uf": "RS",
+  "clusters": 5198,
+  "setores": 25528,
+  "populacao": 10862003,
+  "arquivo": "data/clusters_rs.geojson",
+  "mb": 6.1
+ },
+ {
+  "uf": "SC",
+  "clusters": 3622,
+  "setores": 16711,
+  "populacao": 7586932,
+  "arquivo": "data/clusters_sc.geojson",
+  "mb": 4.0
+ },
+ {
+  "uf": "SE",
+  "clusters": 1204,
+  "setores": 5330,
+  "populacao": 2205934,
+  "arquivo": "data/clusters_se.geojson",
+  "mb": 1.1
+ },
+ {
+  "uf": "SP",
+  "clusters": 21630,
+  "setores": 103180,
+  "populacao": 44273181,
+  "arquivo": "data/clusters_sp.geojson",
+  "mb": 17.8
+ },
+ {
+  "uf": "TO",
+  "clusters": 916,
+  "setores": 4112,
+  "populacao": 1508609,
+  "arquivo": "data/clusters_to.geojson",
+  "mb": 1.7
+ }
+]
